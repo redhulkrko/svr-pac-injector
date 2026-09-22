@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ch.pac Injector — SvR 2010</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161920;
+    --panel-2: #1c2029;
+    --line: #2a2f3a;
+    --text: #e6e8ec;
+    --text-dim: #8b91a0;
+    --accent: #ffb454;
+    --accent-dim: #7a5a2c;
+    --good: #6bcf9a;
+    --bad: #e5695f;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5f4f1; --panel: #ffffff; --panel-2: #f0eee9; --line: #ddd9d0;
+      --text: #1c1c1c; --text-dim: #6b6b6b; --accent: #b5651d; --accent-dim: #e8d3ba;
+      --good: #2f8f5b; --bad: #b3352c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1115; --panel: #161920; --panel-2: #1c2029; --line: #2a2f3a;
+    --text: #e6e8ec; --text-dim: #8b91a0; --accent: #ffb454; --accent-dim: #7a5a2c;
+    --good: #6bcf9a; --bad: #e5695f;
+  }
+  html, body { height: 100%; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+  header.top {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 28px;
+    flex-wrap: wrap; gap: 10px;
+  }
+  h1 {
+    font-family: var(--mono); font-size: 20px; font-weight: 600; margin: 0;
+    letter-spacing: -0.01em;
+  }
+  h1 span { color: var(--accent); }
+  .sub { color: var(--text-dim); font-size: 13px; font-family: var(--mono); }
+  .theme-toggle {
+    background: none; border: 1px solid var(--line); color: var(--text-dim);
+    font-family: var(--mono); font-size: 12px; padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--text); border-color: var(--text-dim); }
+
+  .panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 22px; margin-bottom: 20px;
+  }
+  .panel h2 {
+    font-size: 13px; text-transform: none; margin: 0 0 14px;
+    color: var(--text); font-weight: 600; font-family: var(--sans);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-num {
+    font-family: var(--mono); font-size: 11px; color: var(--bg); background: var(--accent);
+    width: 18px; height: 18px; border-radius: 4px; display: inline-flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  .drop {
+    border: 1.5px dashed var(--line); border-radius: 8px; padding: 26px;
+    text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+    background: var(--panel-2);
+  }
+  .drop:hover, .drop.drag { border-color: var(--accent); background: var(--accent-dim); }
+  .drop input { display: none; }
+  .drop .label { font-size: 14px; color: var(--text); margin-bottom: 4px; }
+  .drop .hint { font-size: 12px; color: var(--text-dim); font-family: var(--mono); }
+
+  .fileinfo {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 16px; font-family: var(--mono); font-size: 13px;
+  }
+  .fileinfo .name { color: var(--text); }
+  .fileinfo .meta { color: var(--text-dim); }
+  .fileinfo button.clear {
+    background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 16px;
+    padding: 0 4px;
+  }
+  .fileinfo button.clear:hover { color: var(--bad); }
+
+  .search {
+    width: 100%; padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 7px; color: var(--text); font-family: var(--mono); font-size: 13px; margin-bottom: 12px;
+  }
+  .search:focus { outline: none; border-color: var(--accent); }
+
+  .entry-table-wrap {
+    max-height: 320px; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px;
+  }
+  table.entries { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
+  table.entries thead th {
+    position: sticky; top: 0; background: var(--panel-2); text-align: left;
+    padding: 8px 12px; color: var(--text-dim); font-weight: 500; border-bottom: 1px solid var(--line);
+  }
+  table.entries tbody td { padding: 7px 12px; border-bottom: 1px solid var(--line); }
+  table.entries tbody tr { cursor: pointer; }
+  table.entries tbody tr:hover { background: var(--panel-2); }
+  table.entries tbody tr.selected { background: var(--accent-dim); }
+  table.entries tbody tr.selected td:first-child { color: var(--accent); font-weight: 600; }
+  .num { text-align: right; color: var(--text-dim); }
+
+  .selected-summary {
+    display: flex; gap: 24px; flex-wrap: wrap; padding: 14px 16px; margin-top: 12px;
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+    font-family: var(--mono); font-size: 13px;
+  }
+  .selected-summary .kv .k { color: var(--text-dim); font-size: 11px; }
+  .selected-summary .kv .v { color: var(--text); margin-top: 2px; }
+
+  .action-row { display: flex; gap: 12px; align-items: center; margin-top: 18px; flex-wrap: wrap; }
+  button.primary {
+    background: var(--accent); color: #1a1400; border: none; padding: 12px 22px;
+    border-radius: 7px; font-family: var(--sans); font-weight: 600; font-size: 14px; cursor: pointer;
+  }
+  button.primary:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary:not(:disabled):hover { filter: brightness(1.08); }
+  button.ghost {
+    background: none; border: 1px solid var(--line); color: var(--text-dim); padding: 11px 18px;
+    border-radius: 7px; font-family: var(--sans); font-size: 13px; cursor: pointer;
+  }
+  button.ghost:hover { color: var(--text); border-color: var(--text-dim); }
+
+  .warn {
+    background: color-mix(in srgb, var(--bad) 12%, var(--panel));
+    border: 1px solid color-mix(in srgb, var(--bad) 35%, var(--line));
+    color: var(--bad); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-top: 14px;
+  }
+  .ok {
+    background: color-mix(in srgb, var(--good) 12%, var(--panel));
+    border: 1px solid color-mix(in srgb, var(--good) 35%, var(--line));
+    color: var(--good); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-top: 14px;
+    font-family: var(--mono);
+  }
+  .placeholder { color: var(--text-dim); font-size: 13px; padding: 8px 0; }
+  .disabled-panel { opacity: .45; pointer-events: none; }
+
+  .footnote { color: var(--text-dim); font-size: 12px; line-height: 1.6; margin-top: 30px; }
+  .footnote code { font-family: var(--mono); background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+// ---------- Core archive logic (plain JS, no framework needed) ----------
+
+const BASE = 0x4000;
+const BLOCK = 0x800; // 2048
+const TABLE_START = 0x808;
+
+function parseArchive(buf) {
+  const view = new DataView(buf);
+  const bytes = new Uint8Array(buf);
+
+  const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+  if (magic !== 'DPK8') {
+    throw new Error('Not a recognized ch.pac-family file (missing "DPK8" header).');
+  }
+  const h1 = view.getUint32(4, true);
+  const h2 = view.getUint32(8, true);
+  const h3 = view.getUint32(12, true);
+  const tableTag = String.fromCharCode(bytes[0x800], bytes[0x801], bytes[0x802], bytes[0x803]);
+
+  const entries = [];
+  let pos = TABLE_START;
+  while (pos + 12 <= bytes.length) {
+    let isDigits = true;
+    for (let i = 0; i < 8; i++) {
+      const b = bytes[pos + i];
+      if (b < 48 || b > 57) { isDigits = false; break; }
+    }
+    if (!isDigits) break;
+    const id = String.fromCharCode(...bytes.subarray(pos, pos + 8));
+    const blk = view.getUint16(pos + 8, true);
+    const size = view.getUint16(pos + 10, true);
+    const offset = BASE + blk * BLOCK;
+    entries.push({ id, blk, size, offset, tablePos: pos });
+    pos += 12;
+  }
+
+  return { magic, h1, h2, h3, tableTag, entries, fileLength: bytes.length };
+}
+
+function alignUp(n, align) {
+  return Math.ceil(n / align) * align;
+}
+
+// Build a new archive buffer with `entry` repointed at a freshly appended payload.
+function injectEntry(originalBuf, entry, payloadBuf) {
+  const origBytes = new Uint8Array(originalBuf);
+  const newStart = alignUp(origBytes.length, BLOCK);
+  const blk = (newStart - BASE) / BLOCK;
+
+  if (blk > 0xFFFF) {
+    throw new Error('File too large — the new block index would overflow the 16-bit field.');
+  }
+  if (payloadBuf.byteLength > 0xFFFF) {
+    throw new Error('Payload too large — the size field is 16-bit (max 65535 bytes). This game format cannot address a single sub-file bigger than that.');
+  }
+
+  const totalLen = newStart + payloadBuf.byteLength;
+  const out = new Uint8Array(totalLen);
+  out.set(origBytes, 0);
+  out.set(new Uint8Array(payloadBuf), newStart);
+
+  const view = new DataView(out.buffer);
+  view.setUint16(entry.tablePos + 8, blk, true);
+  view.setUint16(entry.tablePos + 10, payloadBuf.byteLength, true);
+
+  return { buffer: out.buffer, newOffset: newStart, newBlk: blk };
+}
+
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / (1024 * 1024)).toFixed(2) + ' MB';
+}
+function hex(n) { return '0x' + n.toString(16).toUpperCase(); }
+
+// ---------- React UI ----------
+const { useState, useRef, useMemo, useCallback } = React;
+
+function DropZone({ label, hint, onFile, fileInfo, onClear }) {
+  const inputRef = useRef(null);
+  const [drag, setDrag] = useState(false);
+
+  const handleFiles = (files) => {
+    if (files && files[0]) onFile(files[0]);
+  };
+
+  if (fileInfo) {
+    return React.createElement('div', { className: 'fileinfo' },
+      React.createElement('span', { className: 'name' }, fileInfo.name),
+      React.createElement('span', { className: 'meta' }, fmtBytes(fileInfo.size)),
+      React.createElement('button', { className: 'clear', onClick: onClear, title: 'Remove' }, '\u2715')
+    );
+  }
+
+  return React.createElement('div', {
+    className: 'drop' + (drag ? ' drag' : ''),
+    onClick: () => inputRef.current && inputRef.current.click(),
+    onDragOver: (e) => { e.preventDefault(); setDrag(true); },
+    onDragLeave: () => setDrag(false),
+    onDrop: (e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }
+  },
+    React.createElement('input', {
+      ref: inputRef, type: 'file',
+      onChange: (e) => handleFiles(e.target.files)
+    }),
+    React.createElement('div', { className: 'label' }, label),
+    React.createElement('div', { className: 'hint' }, hint)
+  );
+}
+
+function App() {
+  const [theme, setTheme] = useState('dark');
+  const [archiveFile, setArchiveFile] = useState(null); // {name, size}
+  const [archiveBuf, setArchiveBuf] = useState(null);
+  const [parsed, setParsed] = useState(null);
+  const [parseError, setParseError] = useState(null);
+
+  const [payloadFile, setPayloadFile] = useState(null);
+  const [payloadBuf, setPayloadBuf] = useState(null);
+
+  const [search, setSearch] = useState('');
+  const [selectedId, setSelectedId] = useState(null);
+
+  const [result, setResult] = useState(null); // { blobUrl, filename, info }
+  const [error, setError] = useState(null);
+
+  const handleArchiveFile = useCallback(async (file) => {
+    setError(null); setResult(null); setParseError(null);
+    setSelectedId(null);
+    const buf = await file.arrayBuffer();
+    setArchiveFile({ name: file.name, size: file.size });
+    setArchiveBuf(buf);
+    try {
+      const p = parseArchive(buf);
+      setParsed(p);
+    } catch (e) {
+      setParsed(null);
+      setParseError(e.message);
+    }
+  }, []);
+
+  const clearArchive = () => {
+    setArchiveFile(null); setArchiveBuf(null); setParsed(null);
+    setParseError(null); setSelectedId(null); setResult(null); setError(null);
+  };
+
+  const handlePayloadFile = useCallback(async (file) => {
+    setResult(null); setError(null);
+    const buf = await file.arrayBuffer();
+    setPayloadFile({ name: file.name, size: file.size });
+    setPayloadBuf(buf);
+  }, []);
+
+  const clearPayload = () => {
+    setPayloadFile(null); setPayloadBuf(null); setResult(null); setError(null);
+  };
+
+  const filteredEntries = useMemo(() => {
+    if (!parsed) return [];
+    const q = search.trim();
+    if (!q) return parsed.entries;
+    return parsed.entries.filter(e => e.id.includes(q));
+  }, [parsed, search]);
+
+  const selectedEntry = useMemo(() => {
+    if (!parsed || !selectedId) return null;
+    return parsed.entries.find(e => e.id === selectedId) || null;
+  }, [parsed, selectedId]);
+
+  const canInject = parsed && selectedEntry && payloadBuf && archiveBuf;
+
+  const doInject = () => {
+    setError(null); setResult(null);
+    try {
+      const { buffer, newOffset, newBlk } = injectEntry(archiveBuf, selectedEntry, payloadBuf);
+      const blob = new Blob([buffer], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const baseName = archiveFile.name.replace(/(\.[^.]+)$/, '');
+      const ext = (archiveFile.name.match(/\.[^.]+$/) || ['.pac'])[0];
+      const filename = baseName + '_modded' + ext;
+      setResult({
+        blobUrl: url,
+        filename,
+        info: {
+          entryId: selectedEntry.id,
+          oldOffset: selectedEntry.offset,
+          oldSize: selectedEntry.size,
+          newOffset,
+          newBlk,
+          newSize: payloadBuf.byteLength,
+          totalSize: buffer.byteLength
+        }
+      });
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const extractSelected = () => {
+    if (!archiveBuf || !selectedEntry) return;
+    const bytes = new Uint8Array(archiveBuf, selectedEntry.offset, selectedEntry.size);
+    const blob = new Blob([bytes], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = selectedEntry.id + '.pac';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  };
+
+  return React.createElement('div', { className: 'app' },
+    React.createElement('header', { className: 'top' },
+      React.createElement('div', null,
+        React.createElement('h1', null, 'ch', React.createElement('span', null, '.pac'), ' injector'),
+        React.createElement('div', { className: 'sub' }, 'SvR 2010 (PSP) \u2014 character archive patcher')
+      ),
+      React.createElement('button', {
+        className: 'theme-toggle',
+        onClick: () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+      }, theme === 'dark' ? 'Light' : 'Dark')
+    ),
+
+    // Step 1: load archive
+    React.createElement('div', { className: 'panel' },
+      React.createElement('h2', null, React.createElement('span', { className: 'step-num' }, '1'), 'Load your archive'),
+      React.createElement(DropZone, {
+        label: 'Drop ch.pac, CH2.PAC or CH3.PAC here',
+        hint: 'click to browse \u00b7 stays in your browser, nothing is uploaded',
+        fileInfo: archiveFile,
+        onFile: handleArchiveFile,
+        onClear: clearArchive
+      }),
+      parseError && React.createElement('div', { className: 'warn' }, parseError),
+      parsed && React.createElement('div', { className: 'selected-summary', style: { marginTop: '14px' } },
+        React.createElement('div', { className: 'kv' },
+          React.createElement('div', { className: 'k' }, 'FORMAT'),
+          React.createElement('div', { className: 'v' }, parsed.magic + ' / ' + parsed.tableTag)
+        ),
+        React.createElement('div', { className: 'kv' },
+          React.createElement('div', { className: 'k' }, 'ENTRIES'),
+          React.createElement('div', { className: 'v' }, parsed.entries.length)
+        ),
+        React.createElement('div', { className: 'kv' },
+          React.createElement('div', { className: 'k' }, 'FILE SIZE'),
+          React.createElement('div', { className: 'v' }, fmtBytes(parsed.fileLength))
+        )
+      )
+    ),
+
+    // Step 2: pick entry
+    React.createElement('div', { className: 'panel' + (parsed ? '' : ' disabled-panel') },
+      React.createElement('h2', null, React.createElement('span', { className: 'step-num' }, '2'), 'Pick the entry to overwrite'),
+      !parsed
+        ? React.createElement('div', { className: 'placeholder' }, 'Load an archive first.')
+        : React.createElement(React.Fragment, null,
+            React.createElement('input', {
+              className: 'search', placeholder: 'Filter by ID, e.g. 0200 or 00010201',
+              value: search, onChange: (e) => setSearch(e.target.value)
+            }),
+            React.createElement('div', { className: 'entry-table-wrap' },
+              React.createElement('table', { className: 'entries' },
+                React.createElement('thead', null,
+                  React.createElement('tr', null,
+                    React.createElement('th', null, 'ID'),
+                    React.createElement('th', { className: 'num' }, 'BLOCK'),
+                    React.createElement('th', { className: 'num' }, 'OFFSET'),
+                    React.createElement('th', { className: 'num' }, 'SIZE')
+                  )
+                ),
+                React.createElement('tbody', null,
+                  filteredEntries.map(e => React.createElement('tr', {
+                    key: e.id,
+                    className: e.id === selectedId ? 'selected' : '',
+                    onClick: () => { setSelectedId(e.id); setResult(null); setError(null); }
+                  },
+                    React.createElement('td', null, e.id),
+                    React.createElement('td', { className: 'num' }, e.blk),
+                    React.createElement('td', { className: 'num' }, hex(e.offset)),
+                    React.createElement('td', { className: 'num' }, e.size + ' B')
+                  ))
+                )
+              )
+            ),
+            selectedEntry && React.createElement('div', { className: 'selected-summary' },
+              React.createElement('div', { className: 'kv' },
+                React.createElement('div', { className: 'k' }, 'SELECTED'),
+                React.createElement('div', { className: 'v' }, selectedEntry.id)
+              ),
+              React.createElement('div', { className: 'kv' },
+                React.createElement('div', { className: 'k' }, 'CURRENT OFFSET'),
+                React.createElement('div', { className: 'v' }, hex(selectedEntry.offset))
+              ),
+              React.createElement('div', { className: 'kv' },
+                React.createElement('div', { className: 'k' }, 'CURRENT SIZE'),
+                React.createElement('div', { className: 'v' }, selectedEntry.size + ' bytes')
+              ),
+              React.createElement('button', { className: 'ghost', onClick: extractSelected, style: { marginLeft: 'auto' } }, 'Extract current bytes')
+            )
+          )
+    ),
+
+    // Step 3: replacement payload
+    React.createElement('div', { className: 'panel' + (selectedEntry ? '' : ' disabled-panel') },
+      React.createElement('h2', null, React.createElement('span', { className: 'step-num' }, '3'), 'Upload the replacement .pac'),
+      !selectedEntry
+        ? React.createElement('div', { className: 'placeholder' }, 'Pick a target entry first.')
+        : React.createElement(DropZone, {
+            label: 'Drop your replacement sub-archive (e.g. 0001.pac)',
+            hint: 'this is what will be written into the selected slot',
+            fileInfo: payloadFile,
+            onFile: handlePayloadFile,
+            onClear: clearPayload
+          })
+    ),
+
+    // Step 4: inject
+    React.createElement('div', { className: 'panel' + (canInject ? '' : ' disabled-panel') },
+      React.createElement('h2', null, React.createElement('span', { className: 'step-num' }, '4'), 'Inject & download'),
+      React.createElement('div', { className: 'placeholder', style: { marginBottom: '6px' } },
+        canInject
+          ? `New data is appended at the true end of the file (2048-byte aligned) and entry ${selectedEntry.id} is repointed to it \u2014 nothing else in the archive is touched.`
+          : 'Complete steps 1\u20133 first.'
+      ),
+      React.createElement('div', { className: 'action-row' },
+        React.createElement('button', { className: 'primary', disabled: !canInject, onClick: doInject }, 'Inject and build new copy'),
+        result && React.createElement('a', { href: result.blobUrl, download: result.filename, className: 'ghost', style: { textDecoration: 'none' } }, 'Download ' + result.filename)
+      ),
+      error && React.createElement('div', { className: 'warn' }, error),
+      result && React.createElement('div', { className: 'ok' },
+        `${result.info.entryId}: ${result.info.oldSize} B @ ${hex(result.info.oldOffset)}  \u2192  ${result.info.newSize} B @ ${hex(result.info.newOffset)} (block ${result.info.newBlk})\n`,
+        `New file size: ${fmtBytes(result.info.totalSize)}`
+      )
+    ),
+
+    React.createElement('div', { className: 'footnote' },
+      'Format notes: header is ', React.createElement('code', null, 'DPK8'),
+      ', table at ', React.createElement('code', null, '0x800'),
+      ' tagged ', React.createElement('code', null, 'EMD/EMD2/EMD3'),
+      '. Each 12-byte entry is an 8-digit ASCII ID + u16 block index + u16 size; real offset = ',
+      React.createElement('code', null, '0x4000 + block \u00d7 2048'),
+      '. Verified against your uploaded ch.pac, CH2.PAC and CH3.PAC \u2014 every entry\u2019s computed offset lands on a real ', React.createElement('code', null, 'PAC '),
+      ' sub-archive header. The replacement payload is written in as-is, so it needs to already be in the same internal format the game expects for that slot. Single sub-file size is capped at 65535 bytes (a format limit, not a tool limit).'
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
