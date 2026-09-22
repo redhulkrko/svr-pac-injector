@@ -5,8 +5,16 @@ A browser-based tool for injecting/overwriting sub-archives inside the
 Raw 2010* (PSP). Everything runs client-side — no files are uploaded
 anywhere.
 
-**[Open `index.html`](./index.html) in any browser to use it**, or serve
-this folder statically (e.g. GitHub Pages).
+A proper React + Vite project — not a single dumped-together file.
+
+## Running it
+
+```bash
+npm install
+npm run dev       # local dev server
+npm run build     # production build -> dist/
+npm run preview   # preview the production build
+```
 
 ## What it does
 

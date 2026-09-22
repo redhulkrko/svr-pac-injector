@@ -1,6 +1,9 @@
+node_modules
+dist
+.DS_Store
+
 ch.pac
 CH2.PAC
 CH3.PAC
 *.pac
 *.PAC
-.DS_Store
