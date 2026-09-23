@@ -176,25 +176,51 @@ export function buildWrestlerLookup(wrestlerRecords) {
 }
 
 /**
- * Adds a `displayName` field to each V1 entry when its wrestler is found in
- * the lookup for the given identifier — "Name (Match)" style, using
- * VARIANT_LABELS for the known attire slots. Entries the lookup doesn't
- * cover, or non-V1 formats, get `displayName: null` and are left as-is.
+ * Adds a `displayName` field to each entry when its wrestler is found in the
+ * lookup for the given identifier.
+ *
+ * V1 (DPAC): ID is 4 hex digits — first 2 = wrestler, last 2 = attire/variant
+ * slot. Known variant codes get a "(Match)" / "(Story Mode)" / "(Entrance)"
+ * label via VARIANT_LABELS.
+ *
+ * V2 (DPK8): ID is 8 decimal digits — first 4 = wrestler, last 4 = variant.
+ * The variant-code meaning isn't mapped for this format yet, so the name is
+ * shown without a bracketed label until that scheme is known.
+ *
+ * Entries whose wrestler isn't in the lookup for that identifier get
+ * `displayName: null`.
  */
 export function annotateWithNames(entries, format, lookup, identifier) {
-  if (format !== 'v1' || !lookup || identifier == null) {
+  if (identifier == null || !lookup) {
     return entries.map((e) => ({ ...e, displayName: null }));
   }
   const byWrestler = lookup.get(String(identifier));
-  return entries.map((e) => {
-    if (!byWrestler || e.id.length !== 4) return { ...e, displayName: null };
-    const wrestlerId = e.id.slice(0, 2);
-    const variant = e.id.slice(2, 4);
-    const name = byWrestler.get(wrestlerId);
-    if (!name) return { ...e, displayName: null };
-    const label = VARIANT_LABELS[variant];
-    return { ...e, displayName: label ? `${name} (${label})` : name };
-  });
+  if (!byWrestler) {
+    return entries.map((e) => ({ ...e, displayName: null }));
+  }
+
+  if (format === 'v1') {
+    return entries.map((e) => {
+      if (e.id.length !== 4) return { ...e, displayName: null };
+      const wrestlerId = e.id.slice(0, 2);
+      const variant = e.id.slice(2, 4);
+      const name = byWrestler.get(wrestlerId);
+      if (!name) return { ...e, displayName: null };
+      const label = VARIANT_LABELS[variant];
+      return { ...e, displayName: label ? `${name} (${label})` : name };
+    });
+  }
+
+  if (format === 'v2') {
+    return entries.map((e) => {
+      if (e.id.length !== 8) return { ...e, displayName: null };
+      const wrestlerId = e.id.slice(0, 4);
+      const name = byWrestler.get(wrestlerId);
+      return { ...e, displayName: name || null };
+    });
+  }
+
+  return entries.map((e) => ({ ...e, displayName: null }));
 }
 
 export function fmtBytes(n) {
