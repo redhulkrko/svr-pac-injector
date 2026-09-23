@@ -152,11 +152,8 @@ export function extractAllEntries(archiveBuf, entries) {
  * (V1/DPAC entries only — the ID's first 2 hex digits are the wrestler, the
  * last 2 are the attire/variant slot).
  */
-const VARIANT_LABELS = {
-  '01': 'Match',
-  '02': 'Story Mode',
-  '04': 'Entrance',
-};
+const VARIANT_TYPE_LABELS = { '1': 'Match', '2': 'Story Mode', '4': 'Entrance' };
+const ATTIRE_PREFIX_LABELS = { '1': 'Alt. Attire 1', '2': 'Alt. Attire 2', '9': 'Alt. Attire 3' };
 
 export function extractIdentifierFromFilename(filename) {
   const m = /-(\d{2})\.[^.]+$/.exec(filename);
@@ -190,6 +187,21 @@ export function buildWrestlerLookup(wrestlerRecords) {
  * Entries whose wrestler isn't in the lookup for that identifier get
  * `displayName: null`.
  */
+/**
+ * Builds the bracketed label for a V1 variant code (2 hex chars).
+ * First digit = attire slot (0 = default, 1/2/9 = alt attire 1/2/3).
+ * Second digit = clip type (1 = Match, 2 = Story Mode, 4 = Entrance).
+ * e.g. "01" -> "Match", "11" -> "Alt. Attire 1 - Match", "00" -> null.
+ */
+function buildV1VariantLabel(variant) {
+  if (!variant || variant.length !== 2) return null;
+  const [attireDigit, typeDigit] = variant;
+  const attireLabel = ATTIRE_PREFIX_LABELS[attireDigit] || null;
+  const typeLabel = VARIANT_TYPE_LABELS[typeDigit] || null;
+  const parts = [attireLabel, typeLabel].filter(Boolean);
+  return parts.length ? parts.join(' - ') : null;
+}
+
 export function annotateWithNames(entries, format, lookup, identifier) {
   if (identifier == null || !lookup) {
     return entries.map((e) => ({ ...e, displayName: null }));
@@ -206,7 +218,7 @@ export function annotateWithNames(entries, format, lookup, identifier) {
       const variant = e.id.slice(2, 4);
       const name = byWrestler.get(wrestlerId);
       if (!name) return { ...e, displayName: null };
-      const label = VARIANT_LABELS[variant];
+      const label = buildV1VariantLabel(variant);
       return { ...e, displayName: label ? `${name} (${label})` : name };
     });
   }
