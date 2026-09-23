@@ -64,7 +64,8 @@ export default function App() {
     return parsed.entries.find((e) => e.id === selectedId) || null;
   }, [parsed, selectedId]);
 
-  const canInject = Boolean(parsed && selectedEntry && payloadBuf && archiveBuf);
+  const isV2 = parsed?.format === 'v2';
+  const canInject = Boolean(isV2 && parsed && selectedEntry && payloadBuf && archiveBuf);
 
   const doInject = () => {
     setError(null); setResult(null);
@@ -163,7 +164,9 @@ export default function App() {
           <div className="selected-summary" style={{ marginTop: 14 }}>
             <div className="kv">
               <div className="k">FORMAT</div>
-              <div className="v">{parsed.magic} / {parsed.tableTag}</div>
+              <div className="v">
+                {parsed.magic} / {parsed.tableTag} ({isV2 ? 'block-addressed' : 'sequential'})
+              </div>
             </div>
             <div className="kv">
               <div className="k">ENTRIES</div>
@@ -173,6 +176,13 @@ export default function App() {
               <div className="k">FILE SIZE</div>
               <div className="v">{fmtBytes(parsed.fileLength)}</div>
             </div>
+          </div>
+        )}
+        {parsed && !isV2 && (
+          <div className="warn" style={{ marginTop: 14, color: 'var(--text-dim)', background: 'var(--panel-2)', borderColor: 'var(--line)' }}>
+            This is the older <code>DPAC</code> format — extraction is fully supported below, but
+            injection isn't (entries here don't carry their own offset, so a resize means rebuilding
+            the whole data region, not just this one). Steps 3–4 are disabled for this file.
           </div>
         )}
       </div>
@@ -202,7 +212,7 @@ export default function App() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th className="num">BLOCK</th>
+                    {isV2 && <th className="num">BLOCK</th>}
                     <th className="num">OFFSET</th>
                     <th className="num">SIZE</th>
                   </tr>
@@ -215,7 +225,7 @@ export default function App() {
                       onClick={() => { setSelectedId(e.id); setResult(null); setError(null); }}
                     >
                       <td>{e.id}</td>
-                      <td className="num">{e.blk}</td>
+                      {isV2 && <td className="num">{e.blk}</td>}
                       <td className="num">{hex(e.offset)}</td>
                       <td className="num">{e.size} B</td>
                     </tr>
@@ -247,9 +257,11 @@ export default function App() {
       </div>
 
       {/* Step 3 */}
-      <div className={'panel' + (selectedEntry ? '' : ' disabled-panel')}>
+      <div className={'panel' + (selectedEntry && isV2 ? '' : ' disabled-panel')}>
         <h2><span className="step-num">3</span>Upload the replacement .pac</h2>
-        {!selectedEntry ? (
+        {!isV2 ? (
+          <div className="placeholder">Not available for this archive format (see note above).</div>
+        ) : !selectedEntry ? (
           <div className="placeholder">Pick a target entry first.</div>
         ) : (
           <DropZone
@@ -266,7 +278,9 @@ export default function App() {
       <div className={'panel' + (canInject ? '' : ' disabled-panel')}>
         <h2><span className="step-num">4</span>Inject &amp; download</h2>
         <div className="placeholder" style={{ marginBottom: 6 }}>
-          {canInject
+          {!isV2 && parsed
+            ? 'Not available for this archive format.'
+            : canInject
             ? `New data is appended at the true end of the file (2048-byte aligned) and entry ${selectedEntry.id} is repointed to it — nothing else in the archive is touched.`
             : 'Complete steps 1–3 first.'}
         </div>
@@ -292,13 +306,15 @@ export default function App() {
       </div>
 
       <div className="footnote">
-        Format notes: header is <code>DPK8</code>, table at <code>0x800</code> tagged{' '}
-        <code>EMD/EMD2/EMD3</code>. Each 12-byte entry is an 8-digit ASCII ID + u16 block index + u16
-        size; real offset = <code>0x4000 + block × 2048</code>. Verified against real ch.pac, CH2.PAC
-        and CH3.PAC files — every entry's computed offset lands on a real <code>PAC </code> sub-archive
-        header. The replacement payload is written in as-is, so it needs to already be in the same
-        internal format the game expects for that slot. Single sub-file size is capped at 65535 bytes
-        (a format limit, not a tool limit).
+        Two archive formats are auto-detected from the header magic. <code>DPK8</code> (SvR 2010/2011):
+        table at <code>0x800</code>, 12-byte entries (8-digit ASCII ID + u16 block index + u16 size),
+        real offset = <code>0x4000 + block × 2048</code> — each entry independently addressed, so
+        injection just appends and repoints. <code>DPAC</code> (older titles): 4-byte entries (u16 ID +
+        u16 size-in-256-byte-units), no offset field — each entry's position is a running total from
+        the one before it, so this tool extracts from it but doesn't inject into it yet. Both verified
+        byte-for-byte against real files. Injection payloads are written in as-is (need to already be
+        in the internal format the game expects), and the V2 size field is capped at 65535 bytes — a
+        format limit, not a tool limit.
       </div>
     </div>
   );
