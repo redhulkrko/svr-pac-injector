@@ -1,7 +1,17 @@
 import { useState, useMemo, useCallback } from 'react';
 import JSZip from 'jszip';
 import DropZone from './components/DropZone';
-import { parseArchive, injectEntry, extractAllEntries, fmtBytes, hex } from './lib/pacFormat';
+import {
+  parseArchive,
+  injectEntry,
+  extractAllEntries,
+  extractIdentifierFromFilename,
+  buildWrestlerLookup,
+  annotateWithNames,
+  fmtBytes,
+  hex,
+} from './lib/pacFormat';
+import wrestlersData from './data/wrestlers.json';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -53,17 +63,26 @@ export default function App() {
     setPayloadFile(null); setPayloadBuf(null); setResult(null); setError(null);
   };
 
+  const identifier = useMemo(
+    () => (archiveFile ? extractIdentifierFromFilename(archiveFile.name) : null),
+    [archiveFile]
+  );
+  const wrestlerLookup = useMemo(() => buildWrestlerLookup(wrestlersData.wrestlers), []);
+  const entries = useMemo(
+    () => (parsed ? annotateWithNames(parsed.entries, parsed.format, wrestlerLookup, identifier) : []),
+    [parsed, identifier, wrestlerLookup]
+  );
+
   const filteredEntries = useMemo(() => {
-    if (!parsed) return [];
-    const q = search.trim();
-    if (!q) return parsed.entries;
-    return parsed.entries.filter((e) => e.id.includes(q));
-  }, [parsed, search]);
+    const q = search.trim().toLowerCase();
+    if (!q) return entries;
+    return entries.filter((e) => e.id.includes(q) || (e.displayName || '').toLowerCase().includes(q));
+  }, [entries, search]);
 
   const selectedEntry = useMemo(() => {
-    if (!parsed || !selectedId) return null;
-    return parsed.entries.find((e) => e.id === selectedId) || null;
-  }, [parsed, selectedId]);
+    if (!entries.length || !selectedId) return null;
+    return entries.find((e) => e.id === selectedId) || null;
+  }, [entries, selectedId]);
 
   const isV2 = parsed?.format === 'v2';
   const canInject = Boolean(isV2 && parsed && selectedEntry && payloadBuf && archiveBuf);
@@ -217,6 +236,10 @@ export default function App() {
               <div className="k">FILE SIZE</div>
               <div className="v">{fmtBytes(parsed.fileLength)}</div>
             </div>
+            <div className="kv">
+              <div className="k">IDENTIFIER</div>
+              <div className="v">{identifier || 'none detected'}</div>
+            </div>
           </div>
         )}
         {parsed && !isV2 && (
@@ -263,6 +286,7 @@ export default function App() {
                       />
                     </th>
                     <th>ID</th>
+                    <th>NAME</th>
                     {isV2 && <th className="num">BLOCK</th>}
                     <th className="num">OFFSET</th>
                     <th className="num">SIZE</th>
@@ -283,6 +307,9 @@ export default function App() {
                         />
                       </td>
                       <td>{e.id}</td>
+                      <td style={{ color: e.displayName ? 'var(--text)' : 'var(--text-dim)' }}>
+                        {e.displayName || '—'}
+                      </td>
                       {isV2 && <td className="num">{e.blk}</td>}
                       <td className="num">{hex(e.offset)}</td>
                       <td className="num">{e.size} B</td>

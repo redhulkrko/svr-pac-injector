@@ -1,5 +1,8 @@
 {
-  "0001": "John Cena",
-  "0002": "Randy Orton",
-  "0003": "Triple H"
+  "wrestlers": [
+    { "id": "00", "name": "The Rock", "identifier": "07" },
+    { "id": "01", "name": "John Cena", "identifier": "07" },
+    { "id": "02", "name": "Randy Orton", "identifier": "07" },
+    { "id": "00", "name": "Triple H", "identifier": "08" }
+  ]
 }

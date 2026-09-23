@@ -146,6 +146,57 @@ export function extractAllEntries(archiveBuf, entries) {
   return files;
 }
 
+/**
+ * Wrestler name lookup, keyed by a two-digit filename identifier (e.g. the
+ * "07" in ch-07.pac) and the wrestler's own 2-digit ID within that identifier
+ * (V1/DPAC entries only — the ID's first 2 hex digits are the wrestler, the
+ * last 2 are the attire/variant slot).
+ */
+const VARIANT_LABELS = {
+  '01': 'Match',
+  '02': 'Story Mode',
+  '04': 'Entrance',
+};
+
+export function extractIdentifierFromFilename(filename) {
+  const m = /-(\d{2})\.[^.]+$/.exec(filename);
+  return m ? m[1] : null;
+}
+
+export function buildWrestlerLookup(wrestlerRecords) {
+  const lookup = new Map(); // identifier -> Map(wrestlerId -> name)
+  for (const rec of wrestlerRecords || []) {
+    if (!rec || rec.identifier == null || rec.id == null) continue;
+    const identifier = String(rec.identifier);
+    const id = String(rec.id).padStart(2, '0').toLowerCase();
+    if (!lookup.has(identifier)) lookup.set(identifier, new Map());
+    lookup.get(identifier).set(id, rec.name);
+  }
+  return lookup;
+}
+
+/**
+ * Adds a `displayName` field to each V1 entry when its wrestler is found in
+ * the lookup for the given identifier — "Name (Match)" style, using
+ * VARIANT_LABELS for the known attire slots. Entries the lookup doesn't
+ * cover, or non-V1 formats, get `displayName: null` and are left as-is.
+ */
+export function annotateWithNames(entries, format, lookup, identifier) {
+  if (format !== 'v1' || !lookup || identifier == null) {
+    return entries.map((e) => ({ ...e, displayName: null }));
+  }
+  const byWrestler = lookup.get(String(identifier));
+  return entries.map((e) => {
+    if (!byWrestler || e.id.length !== 4) return { ...e, displayName: null };
+    const wrestlerId = e.id.slice(0, 2);
+    const variant = e.id.slice(2, 4);
+    const name = byWrestler.get(wrestlerId);
+    if (!name) return { ...e, displayName: null };
+    const label = VARIANT_LABELS[variant];
+    return { ...e, displayName: label ? `${name} (${label})` : name };
+  });
+}
+
 export function fmtBytes(n) {
   if (n < 1024) return n + ' B';
   if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
