@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
+import JSZip from 'jszip';
 import DropZone from './components/DropZone';
-import { parseArchive, injectEntry, fmtBytes, hex } from './lib/pacFormat';
+import { parseArchive, injectEntry, extractAllEntries, fmtBytes, hex } from './lib/pacFormat';
 
 export default function App() {
   const [theme, setTheme] = useState('dark');
@@ -18,6 +19,9 @@ export default function App() {
 
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+
+  const [extracting, setExtracting] = useState(false);
+  const [extractError, setExtractError] = useState(null);
 
   const handleArchiveFile = useCallback(async (file) => {
     setError(null); setResult(null); setParseError(null); setSelectedId(null);
@@ -89,6 +93,33 @@ export default function App() {
     }
   };
 
+  const extractAll = async () => {
+    if (!archiveBuf || !parsed) return;
+    setExtracting(true);
+    setExtractError(null);
+    try {
+      const files = extractAllEntries(archiveBuf, parsed.entries);
+      const zip = new JSZip();
+      for (const [filename, bytes] of Object.entries(files)) {
+        zip.file(filename, bytes);
+      }
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blob);
+      const baseName = archiveFile.name.replace(/(\.[^.]+)$/, '');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${baseName}_extracted.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e) {
+      setExtractError(e.message);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   const extractSelected = () => {
     if (!archiveBuf || !selectedEntry) return;
     const bytes = new Uint8Array(archiveBuf, selectedEntry.offset, selectedEntry.size);
@@ -153,12 +184,19 @@ export default function App() {
           <div className="placeholder">Load an archive first.</div>
         ) : (
           <>
-            <input
-              className="search"
-              placeholder="Filter by ID, e.g. 0200 or 00010201"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="action-row" style={{ marginTop: 0, marginBottom: 12 }}>
+              <input
+                className="search"
+                style={{ marginBottom: 0, flex: 1 }}
+                placeholder="Filter by ID, e.g. 0200 or 00010201"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <button className="ghost" onClick={extractAll} disabled={extracting}>
+                {extracting ? 'Zipping…' : `Extract all (${parsed.entries.length})`}
+              </button>
+            </div>
+            {extractError && <div className="warn">{extractError}</div>}
             <div className="entry-table-wrap">
               <table className="entries">
                 <thead>

@@ -90,6 +90,18 @@ export function injectEntry(originalBuf, entry, payloadBuf) {
   return { buffer: out.buffer, newOffset: newStart, newBlk: blk };
 }
 
+/**
+ * Extract every entry's raw bytes into a { filename: Uint8Array } map,
+ * ready to hand to JSZip (or anything else that wants the raw pieces).
+ */
+export function extractAllEntries(archiveBuf, entries) {
+  const files = {};
+  for (const e of entries) {
+    files[`${e.id}.pac`] = new Uint8Array(archiveBuf, e.offset, e.size);
+  }
+  return files;
+}
+
 export function fmtBytes(n) {
   if (n < 1024) return n + ' B';
   if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
