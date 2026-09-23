@@ -152,7 +152,19 @@ export function extractAllEntries(archiveBuf, entries) {
  * (V1/DPAC entries only — the ID's first 2 hex digits are the wrestler, the
  * last 2 are the attire/variant slot).
  */
-const VARIANT_TYPE_LABELS = { '1': 'Match', '2': 'Story Mode', '4': 'Entrance' };
+const VARIANT_TYPE_LABELS = {
+  '1': 'Match',
+  '2': 'Story Mode',
+  '4': 'Entrance',
+  // Confirmed present and loadable, but their exact purpose isn't pinned down —
+  // observed to just be plain duplicate copies of the character (possibly used
+  // by other game modes). Labeled generically rather than guessing a specific
+  // meaning; safe to copy over like any other slot when a wrestler has them.
+  '0': 'Alt. Copy',
+  '3': 'Alt. Copy',
+  '5': 'Alt. Copy',
+  '6': 'Alt. Copy',
+};
 const ATTIRE_PREFIX_LABELS = { '1': 'Alt. Attire 1', '2': 'Alt. Attire 2', '9': 'Alt. Attire 3' };
 
 export function extractIdentifierFromFilename(filename) {
