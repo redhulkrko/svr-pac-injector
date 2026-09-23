@@ -1,8 +1,409 @@
 {
   "wrestlers": [
-    { "id": "00", "name": "The Rock", "identifier": "07" },
-    { "id": "01", "name": "John Cena", "identifier": "07" },
-    { "id": "02", "name": "Randy Orton", "identifier": "07" },
-    { "id": "00", "name": "Triple H", "identifier": "08" }
+    {
+      "id": "00",
+      "name": "The Rock",
+      "identifier": "07"
+    },
+    {
+      "id": "01",
+      "name": "Steve Austin",
+      "identifier": "07"
+    },
+    {
+      "id": "02",
+      "name": "Triple H",
+      "identifier": "07"
+    },
+    {
+      "id": "03",
+      "name": "Undertaker",
+      "identifier": "07"
+    },
+    {
+      "id": "04",
+      "name": "Rob Van Dam",
+      "identifier": "07"
+    },
+    {
+      "id": "05",
+      "name": "Kurt Angle",
+      "identifier": "07"
+    },
+    {
+      "id": "07",
+      "name": "Kane",
+      "identifier": "07"
+    },
+    {
+      "id": "08",
+      "name": "Booker T",
+      "identifier": "07"
+    },
+    {
+      "id": "09",
+      "name": "Chris Benoit",
+      "identifier": "07"
+    },
+    {
+      "id": "10",
+      "name": "Edge",
+      "identifier": "07"
+    },
+    {
+      "id": "12",
+      "name": "Matt Hardy",
+      "identifier": "07"
+    },
+    {
+      "id": "13",
+      "name": "Shane McMahon",
+      "identifier": "07"
+    },
+    {
+      "id": "14",
+      "name": "Lita",
+      "identifier": "07"
+    },
+    {
+      "id": "15",
+      "name": "Jerry Lawler",
+      "identifier": "07"
+    },
+    {
+      "id": "16",
+      "name": "Tazz",
+      "identifier": "07"
+    },
+    {
+      "id": "17",
+      "name": "William Regal",
+      "identifier": "07"
+    },
+    {
+      "id": "18",
+      "name": "Carlito",
+      "identifier": "07"
+    },
+    {
+      "id": "19",
+      "name": "The Boogeyman",
+      "identifier": "07"
+    },
+    {
+      "id": "20",
+      "name": "Bobby Lashley",
+      "identifier": "07"
+    },
+    {
+      "id": "21",
+      "name": "Mr. McMahon",
+      "identifier": "07"
+    },
+    {
+      "id": "23",
+      "name": "Rey Mysterio",
+      "identifier": "07"
+    },
+    {
+      "id": "24",
+      "name": "JBL",
+      "identifier": "07"
+    },
+    {
+      "id": "25",
+      "name": "Jillian Hall",
+      "identifier": "07"
+    },
+    {
+      "id": "26",
+      "name": "Big Show",
+      "identifier": "07"
+    },
+    {
+      "id": "27",
+      "name": "Trish Stratus",
+      "identifier": "07"
+    },
+    {
+      "id": "28",
+      "name": "Psicosis",
+      "identifier": "07"
+    },
+    {
+      "id": "29",
+      "name": "Super Crazy",
+      "identifier": "07"
+    },
+    {
+      "id": "30",
+      "name": "Ric Flair",
+      "identifier": "07"
+    },
+    {
+      "id": "32",
+      "name": "Trevor Murdoch",
+      "identifier": "07"
+    },
+    {
+      "id": "33",
+      "name": "Vito",
+      "identifier": "07"
+    },
+    {
+      "id": "34",
+      "name": "Chris Masters",
+      "identifier": "07"
+    },
+    {
+      "id": "35",
+      "name": "Paul Burchill",
+      "identifier": "07"
+    },
+    {
+      "id": "36",
+      "name": "Lance Cade",
+      "identifier": "07"
+    },
+    {
+      "id": "37",
+      "name": "Chavo Guerrero",
+      "identifier": "07"
+    },
+    {
+      "id": "38",
+      "name": "Kid Kash",
+      "identifier": "07"
+    },
+    {
+      "id": "39",
+      "name": "John Cena",
+      "identifier": "07"
+    },
+    {
+      "id": "40",
+      "name": "Gregory Helms",
+      "identifier": "07"
+    },
+    {
+      "id": "41",
+      "name": "Candice Michelle",
+      "identifier": "07"
+    },
+    {
+      "id": "42",
+      "name": "Torrie Wilson",
+      "identifier": "07"
+    },
+    {
+      "id": "43",
+      "name": "Mickie James",
+      "identifier": "07"
+    },
+    {
+      "id": "44",
+      "name": "Mick Foley",
+      "identifier": "07"
+    },
+    {
+      "id": "45",
+      "name": "Shawn Michaels",
+      "identifier": "07"
+    },
+    {
+      "id": "46",
+      "name": "Dusty Rhodes",
+      "identifier": "07"
+    },
+    {
+      "id": "47",
+      "name": "Stephanie McMahon",
+      "identifier": "07"
+    },
+    {
+      "id": "48",
+      "name": "Mike Chioda",
+      "identifier": "07"
+    },
+    {
+      "id": "49",
+      "name": "Nick Patrick",
+      "identifier": "07"
+    },
+    {
+      "id": "50",
+      "name": "Michael Cole",
+      "identifier": "07"
+    },
+    {
+      "id": "52",
+      "name": "Shane McMahon",
+      "identifier": "07"
+    },
+    {
+      "id": "53",
+      "name": "Jerry Lawler",
+      "identifier": "07"
+    },
+    {
+      "id": "54",
+      "name": "Jonathan Coachman",
+      "identifier": "07"
+    },
+    {
+      "id": "55",
+      "name": "Tazz",
+      "identifier": "07"
+    },
+    {
+      "id": "56",
+      "name": "Eddie Guerrero",
+      "identifier": "07"
+    },
+    {
+      "id": "57",
+      "name": "Umaga",
+      "identifier": "07"
+    },
+    {
+      "id": "58",
+      "name": "Finlay",
+      "identifier": "07"
+    },
+    {
+      "id": "59",
+      "name": "Roddy Piper",
+      "identifier": "07"
+    },
+    {
+      "id": "60",
+      "name": "Batista",
+      "identifier": "07"
+    },
+    {
+      "id": "61",
+      "name": "Randy Orton",
+      "identifier": "07"
+    },
+    {
+      "id": "62",
+      "name": "Mr. Kennedy",
+      "identifier": "07"
+    },
+    {
+      "id": "65",
+      "name": "Bam Bam Bigelow",
+      "identifier": "07"
+    },
+    {
+      "id": "66",
+      "name": "The Great Khali",
+      "identifier": "07"
+    },
+    {
+      "id": "67",
+      "name": "Snitsky",
+      "identifier": "07"
+    },
+    {
+      "id": "68",
+      "name": "Hardcore Holly",
+      "identifier": "07"
+    },
+    {
+      "id": "69",
+      "name": "Mankind",
+      "identifier": "07"
+    },
+    {
+      "id": "70",
+      "name": "Viscera",
+      "identifier": "07"
+    },
+    {
+      "id": "71",
+      "name": "Mr. Perfect",
+      "identifier": "07"
+    },
+    {
+      "id": "72",
+      "name": "Jim Ross",
+      "identifier": "07"
+    },
+    {
+      "id": "73",
+      "name": "Shelton Benjamin",
+      "identifier": "07"
+    },
+    {
+      "id": "74",
+      "name": "Melina",
+      "identifier": "07"
+    },
+    {
+      "id": "75",
+      "name": "Johnny Nitro",
+      "identifier": "07"
+    },
+    {
+      "id": "76",
+      "name": "Joey Mercury",
+      "identifier": "07"
+    },
+    {
+      "id": "77",
+      "name": "Bret Hart",
+      "identifier": "07"
+    },
+    {
+      "id": "78",
+      "name": "Hulk Hogan",
+      "identifier": "07"
+    },
+    {
+      "id": "79",
+      "name": "Mark Henry",
+      "identifier": "07"
+    },
+    {
+      "id": "80",
+      "name": "Jim Neidhart",
+      "identifier": "07"
+    },
+    {
+      "id": "81",
+      "name": "Cactus Jack",
+      "identifier": "07"
+    },
+    {
+      "id": "83",
+      "name": "Dude Love",
+      "identifier": "07"
+    },
+    {
+      "id": "86",
+      "name": "Theodore Long",
+      "identifier": "07"
+    },
+    {
+      "id": "87",
+      "name": "Daivari",
+      "identifier": "07"
+    },
+    {
+      "id": "88",
+      "name": "Tony Chimel",
+      "identifier": "07"
+    },
+    {
+      "id": "89",
+      "name": "Lillian Garcia",
+      "identifier": "07"
+    },
+    {
+      "id": "92",
+      "name": "Moveset Man",
+      "identifier": "07"
+    }
   ]
 }
