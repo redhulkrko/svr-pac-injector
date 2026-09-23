@@ -16,6 +16,7 @@ export default function App() {
 
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState(null);
+  const [checkedIds, setCheckedIds] = useState(() => new Set());
 
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -24,7 +25,7 @@ export default function App() {
   const [extractError, setExtractError] = useState(null);
 
   const handleArchiveFile = useCallback(async (file) => {
-    setError(null); setResult(null); setParseError(null); setSelectedId(null);
+    setError(null); setResult(null); setParseError(null); setSelectedId(null); setCheckedIds(new Set());
     const buf = await file.arrayBuffer();
     setArchiveFile({ name: file.name, size: file.size });
     setArchiveBuf(buf);
@@ -38,7 +39,7 @@ export default function App() {
 
   const clearArchive = () => {
     setArchiveFile(null); setArchiveBuf(null); setParsed(null);
-    setParseError(null); setSelectedId(null); setResult(null); setError(null);
+    setParseError(null); setSelectedId(null); setCheckedIds(new Set()); setResult(null); setError(null);
   };
 
   const handlePayloadFile = useCallback(async (file) => {
@@ -94,26 +95,66 @@ export default function App() {
     }
   };
 
+  const toggleChecked = (id) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleCheckAllFiltered = () => {
+    setCheckedIds((prev) => {
+      const allChecked = filteredEntries.length > 0 && filteredEntries.every((e) => prev.has(e.id));
+      const next = new Set(prev);
+      if (allChecked) {
+        filteredEntries.forEach((e) => next.delete(e.id));
+      } else {
+        filteredEntries.forEach((e) => next.add(e.id));
+      }
+      return next;
+    });
+  };
+
+  const downloadZip = async (entriesToZip, filenameSuffix) => {
+    const files = extractAllEntries(archiveBuf, entriesToZip);
+    const zip = new JSZip();
+    for (const [filename, bytes] of Object.entries(files)) {
+      zip.file(filename, bytes);
+    }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const baseName = archiveFile.name.replace(/(\.[^.]+)$/, '');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${baseName}_${filenameSuffix}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  };
+
   const extractAll = async () => {
     if (!archiveBuf || !parsed) return;
     setExtracting(true);
     setExtractError(null);
     try {
-      const files = extractAllEntries(archiveBuf, parsed.entries);
-      const zip = new JSZip();
-      for (const [filename, bytes] of Object.entries(files)) {
-        zip.file(filename, bytes);
-      }
-      const blob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(blob);
-      const baseName = archiveFile.name.replace(/(\.[^.]+)$/, '');
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${baseName}_extracted.zip`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      await downloadZip(parsed.entries, 'extracted');
+    } catch (e) {
+      setExtractError(e.message);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const extractChecked = async () => {
+    if (!archiveBuf || !parsed || checkedIds.size === 0) return;
+    setExtracting(true);
+    setExtractError(null);
+    try {
+      const chosen = parsed.entries.filter((e) => checkedIds.has(e.id));
+      await downloadZip(chosen, 'selected');
     } catch (e) {
       setExtractError(e.message);
     } finally {
@@ -202,6 +243,9 @@ export default function App() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
+              <button className="ghost" onClick={extractChecked} disabled={extracting || checkedIds.size === 0}>
+                {extracting ? 'Zipping…' : `Extract selected (${checkedIds.size})`}
+              </button>
               <button className="ghost" onClick={extractAll} disabled={extracting}>
                 {extracting ? 'Zipping…' : `Extract all (${parsed.entries.length})`}
               </button>
@@ -211,6 +255,13 @@ export default function App() {
               <table className="entries">
                 <thead>
                   <tr>
+                    <th style={{ width: 28 }}>
+                      <input
+                        type="checkbox"
+                        checked={filteredEntries.length > 0 && filteredEntries.every((e) => checkedIds.has(e.id))}
+                        onChange={toggleCheckAllFiltered}
+                      />
+                    </th>
                     <th>ID</th>
                     {isV2 && <th className="num">BLOCK</th>}
                     <th className="num">OFFSET</th>
@@ -224,6 +275,13 @@ export default function App() {
                       className={e.id === selectedId ? 'selected' : ''}
                       onClick={() => { setSelectedId(e.id); setResult(null); setError(null); }}
                     >
+                      <td onClick={(ev) => ev.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          checked={checkedIds.has(e.id)}
+                          onChange={() => toggleChecked(e.id)}
+                        />
+                      </td>
                       <td>{e.id}</td>
                       {isV2 && <td className="num">{e.blk}</td>}
                       <td className="num">{hex(e.offset)}</td>
